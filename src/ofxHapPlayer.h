@@ -36,6 +36,8 @@
 #include <ofxHap/AudioThread.h>
 #include <ofxHap/TimeRangeSet.h>
 
+#include "ofxSoundObject.h"
+
 namespace ofxHap {
     class AudioThread;
     class RingBuffer;
@@ -110,6 +112,15 @@ public:
      */
     int                         getTimeout() const;
     void                        setTimeout(int microseconds);
+	
+	ofSoundStream & getSoundStream();
+	const ofSoundStream & getSoundStream() const;
+	
+	ofxSoundObject & getAudioOut();
+	const ofxSoundObject & getAudioOut() const;
+	
+	ofEvent<void> audioStartedEvent;
+	
 private:
     virtual void    foundMovie(int64_t duration) override;
     virtual void    foundStream(AVStream *stream) override;
@@ -127,7 +138,8 @@ private:
     void            update(ofEventArgs& args);
     void            updatePTS();
     void            read(ofxHap::TimeRangeSequence& sequence);
-    class AudioOutput : public ofBaseSoundOutput {
+
+    class AudioOutput : public ofxSoundObject {
     public:
         AudioOutput();
         ~AudioOutput();
@@ -142,6 +154,7 @@ private:
         int                                 _channels;
         int                                 _sampleRate;
         std::shared_ptr<ofxHap::RingBuffer> _buffer;
+	public:
         ofSoundStream                       _soundStream;
     };
     class DecodedFrame {

@@ -987,8 +987,24 @@ void ofxHapPlayer::setTimeout(int microseconds)
     _timeout = std::chrono::microseconds(microseconds);
 }
 
+ofSoundStream & ofxHapPlayer::getSoundStream(){
+	return _audioOut._soundStream;
+}
+
+const ofSoundStream & ofxHapPlayer::getSoundStream() const{
+	return _audioOut._soundStream;
+}
+	
+ofxSoundObject & ofxHapPlayer::getAudioOut(){
+	return _audioOut;
+}
+	
+const ofxSoundObject & ofxHapPlayer::getAudioOut() const{
+	return _audioOut;
+}
+	
 ofxHapPlayer::AudioOutput::AudioOutput()
-: _started(false), _channels(0), _sampleRate(0)
+: _started(false), _channels(0), _sampleRate(0), ofxSoundObject(OFX_SOUND_OBJECT_SOURCE) 
 {
     
 }
@@ -1109,6 +1125,7 @@ void ofxHapPlayer::AudioOutput::audioOut(ofSoundBuffer& buffer)
 void ofxHapPlayer::startAudio()
 {
     _audioOut.start();
+	ofNotifyEvent(audioStartedEvent, this);
 }
 
 void ofxHapPlayer::stopAudio()

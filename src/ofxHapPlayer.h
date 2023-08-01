@@ -35,6 +35,7 @@
 #include <ofxHap/Demuxer.h>
 #include <ofxHap/AudioThread.h>
 #include <ofxHap/TimeRangeSet.h>
+#include <ofxHap/AudioOutput.h>
 
 namespace ofxHap {
     class AudioThread;
@@ -127,23 +128,7 @@ private:
     void            update(ofEventArgs& args);
     void            updatePTS();
     void            read(ofxHap::TimeRangeSequence& sequence);
-    class AudioOutput : public ofBaseSoundOutput {
-    public:
-        AudioOutput();
-        ~AudioOutput();
-        void configure(int channels, int sampleRate, std::shared_ptr<ofxHap::RingBuffer> buffer);
-        void start();
-        void stop();
-        void close();
-        unsigned int getBestRate(unsigned int rate) const;
-        virtual void audioOut(ofSoundBuffer& buffer) override;
-    private:
-        bool                                _started;
-        int                                 _channels;
-        int                                 _sampleRate;
-        std::shared_ptr<ofxHap::RingBuffer> _buffer;
-        ofSoundStream                       _soundStream;
-    };
+
     class DecodedFrame {
     public:
         DecodedFrame();
@@ -164,7 +149,7 @@ private:
     uint64_t            _frameTime;
     ofShader            _shader;
     ofTexture           _texture;
-    bool                _playing;
+
     bool                _wantsUpload;
 	string              _moviePath;
     ofxHap::TimeRangeSet _active;
@@ -172,7 +157,7 @@ private:
     std::shared_ptr<ofxHap::Demuxer>        _demuxer;
     std::shared_ptr<ofxHap::RingBuffer>     _buffer;
     std::shared_ptr<ofxHap::AudioThread>   _audioThread;
-    AudioOutput         _audioOut;
+    ofxHap::AudioOutput         _audioOut;
     float               _volume;
     std::chrono::microseconds               _timeout;
     float               _positionOnLoad;

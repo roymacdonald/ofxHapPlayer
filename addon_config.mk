@@ -97,7 +97,13 @@ linux:
 	ADDON_LDFLAGS = -lsnappy -ldispatch
 
 osx:
-	ADDON_LDFLAGS = -rpath @loader_path/../../../../../../../addons/ofxHapPlayer/libs
+	
+	ADDON_LIBS = libs/ffmpeg/lib/osx/libswresample.3.9.100.dylib 
+	ADDON_LIBS += libs/ffmpeg/lib/osx/libavcodec.58.134.100.dylib 
+	ADDON_LIBS += libs/ffmpeg/lib/osx/libavutil.56.70.100.dylib 
+	ADDON_LIBS += libs/ffmpeg/lib/osx/libavformat.58.76.100.dylib 
+	ADDON_LIBS += libs/snappy/lib/osx/libsnappy.1.1.9.dylib
+
 	ADDON_INCLUDES_EXCLUDE = libs/ffmpeg/include/libavformat
 	ADDON_INCLUDES_EXCLUDE += libs/ffmpeg/include/libavutil
 	ADDON_INCLUDES_EXCLUDE += libs/ffmpeg/include/libavcodec

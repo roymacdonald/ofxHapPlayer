@@ -18,8 +18,12 @@ For example, if you want to use the addon with OpenFrameworks 0.9.x:
 
 ## IMPORTANT (MAC OS and Xcode)
 The libraries were updated so this have to be embeded in the app bundle, this way the app can be portable.
-But you will need to run a script to copy these.
+Make sure you update your project with Project Generator before anything.
 
+
+There are 2 options. Choose either but not both
+
+#### Option 1
 After the first time you compile and run the app will crash saying it could not find some dylib files. Dont panic. Do as follows.
 
 In the terminal, `cd` into the folder of your project that uses ofxHapPlayer
@@ -38,6 +42,38 @@ That Should copy the needed libraries.
 Now run the app and it will be fine.
 On subsequent compile runs the dylibs will remain in place so there is no need to copy each time you compile. Do it only if it crashes with the error that it cant find the dylib.
 
+
+#### Option 2
+
+You will need to do the following only once after generating/updating your project with Project Generator. (if you run your project through project generator you will need to do it again>
+
+Select the project in the project navigator, then select Build Phases
+
+![](doc/images/screenshot1.png)
+
+Then Xcode's top menu select Editor > Add Build Phase > Add Run Script Build Phase.
+
+![](doc/images/screenshot2.png)
+
+
+Expand the newly added Run Script build phase and paste the following into its text area.
+
+
+```
+
+# change the following line in case you have ofxHapPlayer installed elsewhere
+OFX_HAP_PLAYER_PATH="$OF_PATH/addons/ofxHapPlayer" 
+	
+rsync -avz --exclude='.DS_Store'  "$OFX_HAP_PLAYER_PATH/libs/ffmpeg/lib/osx/" "$TARGET_BUILD_DIR/$PRODUCT_NAME.app/Contents/MacOS/"
+rsync -avz --exclude='.DS_Store'  "$OFX_HAP_PLAYER_PATH/libs/snappy/lib/osx/" "$TARGET_BUILD_DIR/$PRODUCT_NAME.app/Contents/MacOS/"
+```
+
+
+![](doc/images/screenshot3.png)
+
+
+Now compile.
+ 
 
 
 ## Linux Requirements

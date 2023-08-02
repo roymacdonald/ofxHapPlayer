@@ -88,6 +88,13 @@ void ofxHap::AudioResampler::setRate(float r)
         _reconfigure = true;
     }
 }
+void ofxHap::AudioResampler::setSampleRateOut(int sampleRateOut){
+    if(_sampleRateOut != sampleRateOut){
+        _sampleRateOut = sampleRateOut;
+        _reconfigure = true;
+    }
+}
+
 
 int ofxHap::AudioResampler::resample(const AVFrame *frame, int offset, int srcLength, float *dst, int dstLength, int& outSamplesWritten, int& outSamplesRead)
 {

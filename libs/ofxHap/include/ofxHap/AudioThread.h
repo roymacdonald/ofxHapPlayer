@@ -36,6 +36,7 @@
 #include "RingBuffer.h"
 #include "ErrorReceiving.h"
 #include "Clock.h"
+#include "ofEvent.h"
 
 typedef struct AVPacket AVPacket;
 typedef struct AVFrame AVFrame;
@@ -58,6 +59,7 @@ namespace ofxHap {
         void        endOfStream();
         void        flush();
         void        setVolume(float v);
+        void setSampleRateOut(int sampleRate);
     private:
         class Action {
         public:
@@ -77,6 +79,7 @@ namespace ofxHap {
         public:
             Fader(int fadeDuration) : _pos(0), _duration(fadeDuration) {}
             int getFadeDuration() const { return _duration; }
+            void setFadeDuration(int duration){_duration = duration;}
             void add(int64_t delay, float start, float end);
             void apply(float *dst, int channels, int length);
             void clear();
@@ -108,7 +111,7 @@ namespace ofxHap {
             std::vector<Fade> _fades;
             int _duration;
         };
-        void                                threadMain(AudioParameters params, int ourRate, std::shared_ptr<ofxHap::RingBuffer> buffer);
+        void                                threadMain(AudioParameters params, std::shared_ptr<ofxHap::RingBuffer> buffer);
         static int                          reverse(AVFrame *dst, const AVFrame *src);
         Receiver                            &_receiver;
         std::shared_ptr<ofxHap::RingBuffer> _buffer;
@@ -121,6 +124,11 @@ namespace ofxHap {
         bool                                _soft;
         Clock                               _clock;
         float                               _volume;
+        int                                 _sampleRateOut;
+        int                                 _newSampleRateOut;
+        void sampleRateOutCb(size_t & sr);
+        bool bOutSampleRateChanged = false;
+        ofEventListener sampleRateOutListener;
     };
 }
 

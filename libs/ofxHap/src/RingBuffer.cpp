@@ -36,6 +36,11 @@ ofxHap::RingBuffer::RingBuffer(int channels, int samplesPerChannel)
 
 }
 
+void ofxHap::RingBuffer::setSamplesPerChannel(int samples){
+    _samples = samples;
+    _buffer.resize(_channels * (samples + 1)); // maintain an empty slot to distinguish between empty and full state
+}
+
 int ofxHap::RingBuffer::getSamplesPerChannel() const
 {
     return _samples;

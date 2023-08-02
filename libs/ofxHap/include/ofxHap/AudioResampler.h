@@ -44,6 +44,7 @@ namespace ofxHap {
         float getRate() const;
         void setRate(float r); // harmless to call repeatedly with same value
         // returns an AVERROR or 0 on success
+        void setSampleRateOut(int sampleRateOut);
         int resample(const AVFrame *src, int offset, int srcLength, float *dst, int dstLength, int& outSamplesWritten, int& outSamplesRead);
     private:
         float       _volume;

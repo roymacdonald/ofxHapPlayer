@@ -37,12 +37,13 @@ extern "C" {
 #include <ofxHap/AudioResampler.h>
 #include <ofxHap/MovieTime.h>
 #include <ofxHap/PacketCache.h>
+#include <ofxHap/AudioOutput.h>
 
 ofxHap::AudioThread::AudioThread(const AudioParameters& params ,
                                  int outRate,
                                  std::shared_ptr<ofxHap::RingBuffer> buffer,
                                  Receiver& receiver)
-: _receiver(receiver), _buffer(buffer), _thread(&ofxHap::AudioThread::threadMain, this, params, outRate, buffer),
+: _receiver(receiver), _buffer(buffer), _sampleRateOut(outRate), _thread(&ofxHap::AudioThread::threadMain, this, params, buffer),
   _finish(false), _sync(false), _soft(false)
 {
 
@@ -58,7 +59,7 @@ ofxHap::AudioThread::~AudioThread()
     _thread.join();
 }
 
-void ofxHap::AudioThread::threadMain(AudioParameters params, int outRate, std::shared_ptr<ofxHap::RingBuffer> buffer)
+void ofxHap::AudioThread::threadMain(AudioParameters params, std::shared_ptr<ofxHap::RingBuffer> buffer)
 {
     if (params.duration == 0)
     {
@@ -81,6 +82,8 @@ void ofxHap::AudioThread::threadMain(AudioParameters params, int outRate, std::s
 
     if (result >= 0)
     {
+        
+        sampleRateOutListener = ofxHap::GetSoundStream().outSampleRate.newListener(this, &ofxHap::AudioThread::sampleRateOutCb);
 #if OFX_HAP_HAS_CODECPAR
         int sampleRate = params.parameters->sample_rate;
         int channels = params.parameters->channels;
@@ -88,8 +91,8 @@ void ofxHap::AudioThread::threadMain(AudioParameters params, int outRate, std::s
         int sampleRate = params.context->sample_rate;
         int channels = params.context->channels;
 #endif
-        AudioResampler resampler(params, outRate);
-        Fader fader(outRate / 20);
+        AudioResampler resampler(params, _sampleRateOut);
+        Fader fader(_sampleRateOut / 20);
         bool finish = false;
         std::queue<Action> queue;
         AudioFrameCache cache;
@@ -168,7 +171,7 @@ void ofxHap::AudioThread::threadMain(AudioParameters params, int outRate, std::s
                     while (count[i] > 0)
                     {
                         // Only queue (roughly) as many samples as we need to fill the buffer, to avoid choking the resampler
-                        int countInMax = static_cast<int>(av_rescale_q(count[i], {1, static_cast<int>(outRate / std::fabs(clock.getRate()))}, {1, sampleRate}));
+                        int countInMax = static_cast<int>(av_rescale_q(count[i], {1, static_cast<int>(_sampleRateOut / std::fabs(clock.getRate()))}, {1, sampleRate}));
 
                         int written = 0;
                         int consumed = 0;
@@ -178,7 +181,7 @@ void ofxHap::AudioThread::threadMain(AudioParameters params, int outRate, std::s
                             current = MovieTime::nextRange(clock, last, clock.period);
                             fader.clear();
                             fader.add(0, 0.0, 1.0);
-                            fader.add(av_rescale_q(std::abs(current.length), {1, sampleRate}, {1, static_cast<int>(outRate / std::fabs(clock.getRate()))}) - fader.getFadeDuration(), 1.0, 0.0);
+                            fader.add(av_rescale_q(std::abs(current.length), {1, sampleRate}, {1, static_cast<int>(_sampleRateOut / std::fabs(clock.getRate()))}) - fader.getFadeDuration(), 1.0, 0.0);
                         }
 
                         if (current.start < params.start || current.start > params.start + params.duration)
@@ -206,11 +209,11 @@ void ofxHap::AudioThread::threadMain(AudioParameters params, int outRate, std::s
                                 }
                             }
                             consumed = std::min(consumed, static_cast<int>(std::abs(current.length)));
-                            written = static_cast<int>(av_rescale_q(consumed, {1, sampleRate}, {1, static_cast<int>(outRate / std::fabs(clock.getRate()))}));
+                            written = static_cast<int>(av_rescale_q(consumed, {1, sampleRate}, {1, static_cast<int>(_sampleRateOut / std::fabs(clock.getRate()))}));
                             if (written > count[i])
                             {
                                 written = count[i];
-                                consumed = static_cast<int>(av_rescale_q(written, {1, static_cast<int>(outRate / std::fabs(clock.getRate()))}, {1, sampleRate}));
+                                consumed = static_cast<int>(av_rescale_q(written, {1, static_cast<int>(_sampleRateOut / std::fabs(clock.getRate()))}, {1, sampleRate}));
                             }
                             av_samples_set_silence((uint8_t **)&dst[i], 0, written, channels, AV_SAMPLE_FMT_FLT);
                         }
@@ -271,7 +274,7 @@ void ofxHap::AudioThread::threadMain(AudioParameters params, int outRate, std::s
                             count[i] -= written;
                             dst[i] += written * channels;
                             filled += written;
-                            now = av_add_stable({1, AV_TIME_BASE}, now, {1, outRate}, written);
+                            now = av_add_stable({1, AV_TIME_BASE}, now, {1, _sampleRateOut}, written);
                         }
                         if (consumed > 0)
                         {
@@ -337,7 +340,7 @@ void ofxHap::AudioThread::threadMain(AudioParameters params, int outRate, std::s
                 }
                 else
                 {
-                    int64_t next = now + av_rescale_q(_buffer->getSamplesPerChannel() / 2, {1, outRate}, {1, AV_TIME_BASE});
+                    int64_t next = now + av_rescale_q(_buffer->getSamplesPerChannel() / 2, {1, _sampleRateOut}, {1, AV_TIME_BASE});
                     int64_t wait = next - av_gettime_relative();
                     if (wait > 0)
                     {
@@ -374,6 +377,13 @@ void ofxHap::AudioThread::threadMain(AudioParameters params, int outRate, std::s
                 }
 
                 resampler.setVolume(_volume);
+                if(bOutSampleRateChanged){
+                    _sampleRateOut = _newSampleRateOut;
+                    resampler.setSampleRateOut(_sampleRateOut);
+                    fader.setFadeDuration(_sampleRateOut / 20);
+                    bOutSampleRateChanged = false;
+                }
+
             }
         }
 
@@ -427,6 +437,18 @@ void ofxHap::AudioThread::setVolume(float v)
 {
     std::lock_guard<std::mutex> guard(_lock);
     _volume = v;
+    _condition.notify_one();
+}
+
+void ofxHap::AudioThread::sampleRateOutCb(size_t & sr){
+    setSampleRateOut(static_cast<int>(sr));
+}
+void ofxHap::AudioThread::setSampleRateOut(int sampleRate)
+{
+    std::lock_guard<std::mutex> guard(_lock);
+    _newSampleRateOut = sampleRate;
+    
+    bOutSampleRateChanged = true;
     _condition.notify_one();
 }
 

@@ -40,6 +40,8 @@ namespace ofxHap {
          */
         RingBuffer(int channels, int samplesPerChannel);
         int getSamplesPerChannel() const;
+        void setSamplesPerChannel(int samples);
+        
         // On return first and second are pointers to positions to write samples to
         // firstCount and secondCount are the size, in samples per channel, of each buffer
         void writeBegin(float * &first, int &firstCount, float * &second, int &secondCount);

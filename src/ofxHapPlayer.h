@@ -154,11 +154,11 @@ private:
 	string              _moviePath;
     ofxHap::TimeRangeSet _active;
     ofxHap::LockingPacketCache              _videoPackets;
-    std::shared_ptr<ofxHap::Demuxer>        _demuxer;
-    std::shared_ptr<ofxHap::RingBuffer>     _buffer;
-    std::shared_ptr<ofxHap::AudioThread>   _audioThread;
-    ofxHap::AudioOutput         _audioOut;
-    float               _volume;
+    std::shared_ptr<ofxHap::Demuxer>        _demuxer = nullptr;
+    std::shared_ptr<ofxHap::RingBuffer>     _buffer = nullptr;
+    std::shared_ptr<ofxHap::AudioThread>   _audioThread = nullptr;
+    std::unique_ptr<ofxHap::AudioOutput>   _audioOut = nullptr;
+    float               _volume = 1;
     std::chrono::microseconds               _timeout;
     float               _positionOnLoad;
 };

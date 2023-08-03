@@ -36,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ofxHap/AudioThread.h>
 #include <ofxHap/RingBuffer.h>
 #include <ofxHap/MovieTime.h>
+#include <ofxHap/AudioMixer.h>
 extern "C" {
 #include <libavformat/avformat.h>
 #include <libavutil/time.h>
@@ -141,11 +142,12 @@ namespace ofxHapPY {
 ofxHapPlayer::ofxHapPlayer() :
     _loaded(false), _videoStream(nullptr), _audioStreamIndex(-1), _frameTime(av_gettime_relative()),
     _wantsUpload(false),
-    _demuxer(), _buffer(nullptr), _audioThread(nullptr), _audioOut(), _volume(1.0), _timeout(30000),
+    _demuxer(), _buffer(nullptr), _audioThread(nullptr), _volume(1.0), _timeout(30000),
     _positionOnLoad(0.0)
 {
     _clock.setPausedAt(true, 0);
     ofAddListener(ofEvents().update, this, &ofxHapPlayer::update);
+
 }
 
 ofxHapPlayer::~ofxHapPlayer()
@@ -164,7 +166,11 @@ bool ofxHapPlayer::load(string name)
     /*
     Close any open movie
     */
-    bool _wasPlaying = _audioOut.isPlaying();
+
+    bool _wasPlaying = false;
+    if(_audioOut) {
+        _wasPlaying = _audioOut->isPlaying();
+    }
     close();
 
 
@@ -228,7 +234,13 @@ void ofxHapPlayer::foundStream(AVStream *stream)
         _audioStreamIndex = stream->index;
         _buffer = std::make_shared<ofxHap::RingBuffer>(channels, sampleRate / 8);
 
-        _audioOut.configure( _buffer);
+        if(_audioOut){
+            _audioOut.reset();
+        } 
+
+        _audioOut = make_unique<ofxHap::AudioOutput>();
+
+        _audioOut->configure( _buffer);
 
         _audioThread = std::make_shared<ofxHap::AudioThread>(parameters, sampleRate, _buffer, *this);
         _audioThread->setVolume(_volume);
@@ -295,7 +307,10 @@ void ofxHapPlayer::close()
     std::lock_guard<std::mutex> guard(_lock);
     _demuxer.reset();
     _audioThread.reset();
-    _audioOut.stop();
+    if(_audioOut) {
+        _audioOut->stop();
+        _audioOut.reset();
+    }
     _buffer.reset();
     _videoPackets.clear();
     _clock.period = 0;
@@ -372,7 +387,7 @@ void ofxHapPlayer::update(ofEventArgs & args)
         vidPosition = _videoStream->duration - 1;
         // Stop if we have got to the end of the movie and aren't looping
 //        _playing = false;
-        _audioOut.stop();
+        if(_audioOut) _audioOut->stop();
     }
     else
     {
@@ -635,7 +650,7 @@ void ofxHapPlayer::draw(float x, float y, float w, float h) {
 
 void ofxHapPlayer::play()
 {
-    _audioOut.start();
+    if(_audioOut) _audioOut->start();
     std::lock_guard<std::mutex> guard(_lock);
     if (_clock.getDone())
     {
@@ -653,7 +668,7 @@ void ofxHapPlayer::play()
 
 void ofxHapPlayer::stop()
 {
-    _audioOut.stop();
+    if(_audioOut) _audioOut->stop();
     std::lock_guard<std::mutex> guard(_lock);
     setPaused(true, true);
 }
@@ -671,7 +686,7 @@ void ofxHapPlayer::setPaused(bool pause, bool locked)
     {
         if (!pause)
         {
-            _audioOut.start();
+            if(_audioOut) _audioOut->start();
         }
         _clock.setPausedAt(pause, _frameTime);
         if (_audioThread)
@@ -734,7 +749,10 @@ bool ofxHapPlayer::isLoaded() const
 
 bool ofxHapPlayer::isPlaying() const
 {
-    return _audioOut.isPlaying();
+    if(_audioOut){
+        return  _audioOut->isPlaying();
+    } 
+    return false;
 }
 
 std::string ofxHapPlayer::getError() const
@@ -992,12 +1010,12 @@ void ofxHapPlayer::setTimeout(int microseconds)
 
 void ofxHapPlayer::startAudio()
 {
-    _audioOut.start();
+    if(_audioOut) _audioOut->start();
 }
 
 void ofxHapPlayer::stopAudio()
 {
-    _audioOut.stop();
+    if(_audioOut) _audioOut->stop();
 }
 
 ofxHapPlayer::DecodedFrame::DecodedFrame() :

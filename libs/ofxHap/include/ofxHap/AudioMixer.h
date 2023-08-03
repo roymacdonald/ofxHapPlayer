@@ -15,7 +15,7 @@ class AudioOutput;
 class AudioMixer: public ofBaseSoundOutput {
 public:
     AudioMixer();
-    virtual ~AudioMixer();
+//    virtual ~AudioMixer();
     
         
     /// sets output volume multiplier.
@@ -35,7 +35,7 @@ public:
 
     size_t getCount(){return counter.load();}
     size_t getNumConnections(){
-        std::lock_guard<std::mutex> lck(connectionMutex);
+       // std::lock_guard<std::mutex> lck(connectionMutex);
         return connections.size();
     }
 protected:
@@ -50,5 +50,7 @@ protected:
     std::atomic<size_t> counter;
     
 };
+
+    AudioMixer* GetMixer();
 
 }

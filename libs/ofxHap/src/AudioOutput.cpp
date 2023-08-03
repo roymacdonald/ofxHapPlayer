@@ -6,6 +6,7 @@
 //
 
 #include <ofxHap/AudioOutput.h>
+#include <ofxHap/AudioMixer.h>
 extern "C"{
 #include <libavformat/avformat.h>
 }
@@ -20,14 +21,13 @@ void SoundStream::outSRChanged (size_t&){
     }
 }
 void SoundStream::_setup(){
-    cout << "SoundStream::_setup: outSampleRate " << outSampleRate.get() <<"\n";
     streamSettings.numInputChannels = 0;
     streamSettings.numOutputChannels = 2;
     streamSettings.sampleRate = outSampleRate.get();
     streamSettings.bufferSize = 256;
     streamSettings.numBuffers = 2;
     
-    streamSettings.setOutListener(&GetMixer());
+    streamSettings.setOutListener(GetMixer());
     if(!setup(streamSettings)){
         ofLogError("ofxHapPlayer", "Error starting audio stream.");
     }
@@ -75,30 +75,26 @@ SoundStream& GetSoundStream(){
     return *stream.get();
 }
 
-AudioMixer& GetMixer(){
-    static unique_ptr<AudioMixer> mxr = make_unique<AudioMixer>();
-    return *mxr.get();
-}
-
 
 //-------------------------------------------------------------------------------------
 
 AudioOutput::AudioOutput()
 : playing(false)
 {
-    
 }
 
 AudioOutput::~AudioOutput()
 {
-    GetMixer().disconnect(this);
+    auto m = GetMixer();
+    if(m) m->disconnect(this);
 }
 
 
 void AudioOutput::configure(std::shared_ptr<ofxHap::RingBuffer> buffer)
 {
     _buffer = buffer;
-    GetMixer().connect(this);
+    auto m = GetMixer();
+    if(m) m->connect(this);
 }
 
 bool AudioOutput::audioOut(ofSoundBuffer& buffer)

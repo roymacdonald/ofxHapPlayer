@@ -10,7 +10,7 @@
 #include "ofMain.h"
 #include <atomic>
 #include <ofxHap/RingBuffer.h>
-#include <ofxHap/AudioMixer.h>
+
 namespace ofxHap{
 class AudioOutput {
 public:
@@ -45,7 +45,7 @@ private:
 
 
 SoundStream& GetSoundStream();
-AudioMixer& GetMixer();
+
 
 }
 

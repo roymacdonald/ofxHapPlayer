@@ -12,8 +12,9 @@
 
 namespace ofxHap{
 //----------------------------------------------------
-AudioMixer::AudioMixer():counter(0){
-    
+AudioMixer::AudioMixer():
+counter(0)
+{    
     masterVolListener = masterVol.newListener(this, &AudioMixer::masterVolChanged);
 }
 //----------------------------------------------------
@@ -21,10 +22,10 @@ void AudioMixer::masterVolChanged(float& f) {
     //inherently threadsafe. gets called from within a mutex lock
     masterVolume = masterVol;
 }
-//----------------------------------------------------
-AudioMixer::~AudioMixer(){
-
-}
+////----------------------------------------------------
+//AudioMixer::~AudioMixer(){
+//
+//}
 
 //----------------------------------------------------
 void AudioMixer::setMasterVolume(float vol){
@@ -51,8 +52,8 @@ void AudioMixer::connect(AudioOutput*  audio){
 
 //----------------------------------------------------
 void AudioMixer::disconnect(AudioOutput* audio){
-//    std::lock_guard<std::mutex> lck(connectionMutex);
-//    ofRemove(connections, [audio](AudioOutput* a){return a == audio;});
+    std::lock_guard<std::mutex> lck(connectionMutex);
+    ofRemove(connections, [audio](AudioOutput* a){return a == audio;});
 }
 
 //----------------------------------------------------
@@ -93,4 +94,12 @@ void AudioMixer::audioOut(ofSoundBuffer &output) {
     }
 }
 //----------------------------------------------------
+
+
+AudioMixer* GetMixer(){
+    static unique_ptr<AudioMixer> mxr = make_unique<AudioMixer>();
+    return mxr.get();
+}
+
+
 }

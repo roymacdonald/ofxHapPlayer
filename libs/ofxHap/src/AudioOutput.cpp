@@ -81,6 +81,7 @@ SoundStream& GetSoundStream(){
 AudioOutput::AudioOutput()
 : playing(false)
 {
+    waveform.setNumBuffers(500);
 }
 
 AudioOutput::~AudioOutput()
@@ -102,6 +103,9 @@ bool AudioOutput::audioOut(ofSoundBuffer& buffer)
     if(!playing.load()){
         return false;
     }
+    
+ 
+    
     int wanted = static_cast<int>(buffer.getNumFrames());
     int filled = 0;
 
@@ -133,6 +137,9 @@ bool AudioOutput::audioOut(ofSoundBuffer& buffer)
                                static_cast<int>(buffer.getNumChannels()),
                                AV_SAMPLE_FMT_FLT);
     }
+    
+    waveform.pushBuffer(buffer);
+    
     return true;
 }
 

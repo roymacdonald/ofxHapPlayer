@@ -10,6 +10,7 @@
 #include "ofMain.h"
 #include <atomic>
 #include <ofxHap/RingBuffer.h>
+#include "waveformDraw.h"
 
 namespace ofxHap{
 class AudioOutput {
@@ -23,6 +24,7 @@ public:
     void start();
     void stop();
     bool isPlaying() const;
+    circularBufferWaveformDraw waveform;
 private:
     std::atomic<bool>   playing;
     std::shared_ptr<ofxHap::RingBuffer> _buffer;

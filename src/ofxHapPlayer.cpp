@@ -240,9 +240,11 @@ void ofxHapPlayer::foundStream(AVStream *stream)
 
         _audioOut = make_unique<ofxHap::AudioOutput>();
 
-        _audioOut->configure( _buffer);
+       
 
         _audioThread = std::make_shared<ofxHap::AudioThread>(parameters, sampleRate, _buffer, *this);
+        _audioOut->configure(_audioThread.get(), _buffer);
+        
         _audioThread->setVolume(_volume);
         _audioThread->sync(_clock, false);
     }

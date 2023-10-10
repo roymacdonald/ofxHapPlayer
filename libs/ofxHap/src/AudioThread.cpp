@@ -86,11 +86,12 @@ void ofxHap::AudioThread::threadMain(AudioParameters params, std::shared_ptr<ofx
         sampleRateOutListener = ofxHap::GetSoundStream().outSampleRate.newListener(this, &ofxHap::AudioThread::sampleRateOutCb);
 #if OFX_HAP_HAS_CODECPAR
         int sampleRate = params.parameters->sample_rate;
-        int channels = params.parameters->channels;
+//        int channels = params.parameters->channels;
 #else
         int sampleRate = params.context->sample_rate;
-        int channels = params.context->channels;
+//        int channels = params.context->channels;
 #endif
+        int channels = buffer->getNumChannels();
         AudioResampler resampler(params, _sampleRateOut);
         Fader fader(_sampleRateOut / 20);
         bool finish = false;
@@ -377,6 +378,8 @@ void ofxHap::AudioThread::threadMain(AudioParameters params, std::shared_ptr<ofx
                 }
 
                 resampler.setVolume(_volume);
+                resampler.setOutChannels(_outNumChannels);
+                
                 if(bOutSampleRateChanged){
                     _sampleRateOut = _newSampleRateOut;
                     resampler.setSampleRateOut(_sampleRateOut);
@@ -451,6 +454,12 @@ void ofxHap::AudioThread::setSampleRateOut(int sampleRate)
     bOutSampleRateChanged = true;
     _condition.notify_one();
 }
+void ofxHap::AudioThread::setNumOutputChannels(size_t outChans){
+    std::lock_guard<std::mutex> guard(_lock);
+    _outNumChannels = outChans;
+    _condition.notify_one();
+}
+
 
 int ofxHap::AudioThread::reverse(AVFrame *dst, const AVFrame *src)
 {

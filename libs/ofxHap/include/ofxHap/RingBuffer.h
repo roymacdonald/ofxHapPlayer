@@ -52,6 +52,7 @@ namespace ofxHap {
         void readBegin(const float * &first, int &firstCount, const float * &second, int &secondCount);
         // numSamples is the number of samples per channel actually read
         void readEnd(int numSamples);
+        int getNumChannels(){return _channels;}
     private:
         std::atomic<int>    _readStart;
         std::atomic<int>    _writeStart;

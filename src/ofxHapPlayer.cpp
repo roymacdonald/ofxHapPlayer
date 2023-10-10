@@ -239,13 +239,13 @@ void ofxHapPlayer::foundStream(AVStream *stream)
         } 
 
         _audioOut = make_unique<ofxHap::AudioOutput>();
-
+        _audioOut->configure(_buffer);
        
 
         _audioThread = std::make_shared<ofxHap::AudioThread>(parameters, sampleRate, _buffer, *this);
-        _audioOut->configure(_audioThread.get(), _buffer);
-        
+#ifndef  USING_OFX_SOUND_OBJECTS
         _audioThread->setVolume(_volume);
+#endif
         _audioThread->sync(_clock, false);
     }
 }
@@ -952,12 +952,15 @@ float ofxHapPlayer::getVolume() const
 
 void ofxHapPlayer::setVolume(float volume)
 {
+    
     if (volume != _volume)
     {
+#ifndef  USING_OFX_SOUND_OBJECTS
         std::lock_guard<std::mutex> guard(_lock);
         _volume = ofClamp(volume, 0.0, 1.0);
         if (_audioThread)
             _audioThread->setVolume(_volume);
+#endif
     }
 }
 

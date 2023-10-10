@@ -15,6 +15,10 @@ namespace ofxHap{
 AudioMixer::AudioMixer():
 counter(0)
 {    
+#ifdef USING_OFX_SOUND_OBJECTS
+    waveform.setNumBuffers(500);
+    waveform.setGridSpacingByNumSamples(256);
+#endif
     masterVolListener = masterVol.newListener(this, &AudioMixer::masterVolChanged);
 }
 //----------------------------------------------------
@@ -87,7 +91,10 @@ void AudioMixer::audioOut(ofSoundBuffer &output) {
         if(bNeedsRemoval){
             ofRemove(connections, [](AudioOutput* a){return !a;});
         }
-        
+#ifdef USING_OFX_SOUND_OBJECTS
+    waveform.pushBuffer(output);
+#endif
+    
 //        if(bHasOutput && !ofIsFloatEqual(masterVolume, 1.0f)){
 //            output*=masterVolume;
 //        }

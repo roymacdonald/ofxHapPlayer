@@ -10,6 +10,12 @@
 
 #include <mutex>
 #include <atomic>
+
+
+#ifdef USING_OFX_SOUND_OBJECTS
+#include "waveformDraw.h"
+#endif
+
 namespace ofxHap {
 class AudioOutput;
 class AudioMixer: public ofBaseSoundOutput {
@@ -38,6 +44,10 @@ public:
        // std::lock_guard<std::mutex> lck(connectionMutex);
         return connections.size();
     }
+#ifdef USING_OFX_SOUND_OBJECTS
+    circularBufferWaveformDraw waveform;
+#endif
+    
 protected:
     ofEventListener masterVolListener;
     void masterVolChanged(float& f);

@@ -10,6 +10,9 @@
 extern "C"{
 #include <libavformat/avformat.h>
 }
+
+#include <ofxHap/AudioThread.h>
+
 namespace ofxHap{
 SoundStream::SoundStream(){
         _setup();
@@ -77,11 +80,18 @@ SoundStream& GetSoundStream(){
 
 
 //-------------------------------------------------------------------------------------
-
-AudioOutput::AudioOutput()
-: playing(false)
+AudioOutput::AudioOutput():AudioOutput(-1)
 {
+    
+}
+AudioOutput::AudioOutput(int index)
+: playing(false)
+, stream_index(index)
+{
+#ifdef USING_OFX_SOUND_OBJECTS
     waveform.setNumBuffers(500);
+    waveform.setGridSpacingByNumSamples(256);
+#endif
 }
 
 AudioOutput::~AudioOutput()
@@ -91,8 +101,9 @@ AudioOutput::~AudioOutput()
 }
 
 
-void AudioOutput::configure(std::shared_ptr<ofxHap::RingBuffer> buffer)
+void AudioOutput::configure(AudioThread* audioThread, std::shared_ptr<ofxHap::RingBuffer> buffer)
 {
+    _audioThread = audioThread;
     _buffer = buffer;
     auto m = GetMixer();
     if(m) m->connect(this);
@@ -104,7 +115,10 @@ bool AudioOutput::audioOut(ofSoundBuffer& buffer)
         return false;
     }
     
- 
+    if(_audioThread){
+        _audioThread->setNumOutputChannels(buffer.getNumChannels());
+    }
+    
     
     int wanted = static_cast<int>(buffer.getNumFrames());
     int filled = 0;
@@ -130,6 +144,7 @@ bool AudioOutput::audioOut(ofSoundBuffer& buffer)
 
     if (filled < wanted)
     {
+        cout << "filled < wanted : " <<  filled << " < " << wanted << " stream_index: " << stream_index << "\n";
         float *out = &buffer.getBuffer()[filled * buffer.getNumChannels()];
         av_samples_set_silence((uint8_t **)&out,
                                0,
@@ -137,8 +152,9 @@ bool AudioOutput::audioOut(ofSoundBuffer& buffer)
                                static_cast<int>(buffer.getNumChannels()),
                                AV_SAMPLE_FMT_FLT);
     }
-    
+#ifdef USING_OFX_SOUND_OBJECTS
     waveform.pushBuffer(buffer);
+#endif
     
     return true;
 }

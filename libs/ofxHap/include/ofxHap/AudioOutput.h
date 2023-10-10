@@ -10,22 +10,31 @@
 #include "ofMain.h"
 #include <atomic>
 #include <ofxHap/RingBuffer.h>
+
+#ifdef USING_OFX_SOUND_OBJECTS
 #include "waveformDraw.h"
+#endif
 
 namespace ofxHap{
+class AudioThread;
 class AudioOutput {
 public:
     AudioOutput();
+    AudioOutput(int stream_index);
     ~AudioOutput();
-    void configure(std::shared_ptr<ofxHap::RingBuffer> buffer);
+    void configure(AudioThread* audioThread, std::shared_ptr<ofxHap::RingBuffer> buffer);
 
     bool audioOut(ofSoundBuffer& buffer);
     
     void start();
     void stop();
     bool isPlaying() const;
+#ifdef USING_OFX_SOUND_OBJECTS
     circularBufferWaveformDraw waveform;
+#endif
 private:
+    AudioThread* _audioThread = nullptr;
+    int stream_index;
     std::atomic<bool>   playing;
     std::shared_ptr<ofxHap::RingBuffer> _buffer;
 };

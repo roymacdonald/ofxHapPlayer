@@ -80,43 +80,56 @@ SoundStream& GetSoundStream(){
 
 
 //-------------------------------------------------------------------------------------
-AudioOutput::AudioOutput():AudioOutput(-1)
-{
-    
-}
-AudioOutput::AudioOutput(int index)
-: playing(false)
-, stream_index(index)
+AudioOutput::AudioOutput()
+#ifdef USING_OFX_SOUND_OBJECTS
+:ofxSoundObject(OFX_SOUND_OBJECT_PROCESSOR),
+#else
+:
+playing(false),
+#endif
+ stream_index(-1)
 {
 #ifdef USING_OFX_SOUND_OBJECTS
-    waveform.setNumBuffers(500);
-    waveform.setGridSpacingByNumSamples(256);
+//    waveform.setNumBuffers(500);
+//    waveform.setGridSpacingByNumSamples(256);
+#endif
+    
+}
+AudioOutput::AudioOutput(int index):
+#ifndef USING_OFX_SOUND_OBJECTS
+playing(false),
+#endif
+ stream_index(index)
+{
+#ifdef USING_OFX_SOUND_OBJECTS
+//    waveform.setNumBuffers(500);
+//    waveform.setGridSpacingByNumSamples(256);
 #endif
 }
-
+#ifndef USING_OFX_SOUND_OBJECTS
 AudioOutput::~AudioOutput()
 {
     auto m = GetMixer();
     if(m) m->disconnect(this);
 }
 
-
-void AudioOutput::configure(AudioThread* audioThread, std::shared_ptr<ofxHap::RingBuffer> buffer)
+#endif
+void AudioOutput::configure( std::shared_ptr<ofxHap::RingBuffer> buffer)
 {
-    _audioThread = audioThread;
     _buffer = buffer;
     auto m = GetMixer();
+#ifndef USING_OFX_SOUND_OBJECTS
     if(m) m->connect(this);
+#else
+    
+    if(m) this->connectTo(*m);
+#endif
 }
 
-bool AudioOutput::audioOut(ofSoundBuffer& buffer)
+void AudioOutput::audioOut(ofSoundBuffer& buffer)
 {
-    if(!playing.load()){
-        return false;
-    }
-    
-    if(_audioThread){
-        _audioThread->setNumOutputChannels(buffer.getNumChannels());
+    if(!isPlaying()){
+        return;// false;
     }
     
     
@@ -153,21 +166,34 @@ bool AudioOutput::audioOut(ofSoundBuffer& buffer)
                                AV_SAMPLE_FMT_FLT);
     }
 #ifdef USING_OFX_SOUND_OBJECTS
-    waveform.pushBuffer(buffer);
+//    waveform.pushBuffer(buffer);
 #endif
     
-    return true;
+//    return true;
 }
 
 void AudioOutput::start(){
+#ifdef USING_OFX_SOUND_OBJECTS
+    setBypassed(false);
+#else
     playing = true;
+#endif
 }
 
 void AudioOutput::stop(){
+#ifdef USING_OFX_SOUND_OBJECTS
+    setBypassed(true);
+#else
     playing = false;
+#endif
 }
-bool AudioOutput::isPlaying() const{
+bool AudioOutput::isPlaying() {
+#ifdef USING_OFX_SOUND_OBJECTS
+    return !isBypassed();
+#else
     return playing.load();
+#endif
+    
 }
 
 }

@@ -16,26 +16,36 @@
 #endif
 
 namespace ofxHap{
-class AudioThread;
-class AudioOutput {
+class AudioOutput 
+#ifdef USING_OFX_SOUND_OBJECTS
+: public ofxSoundObject
+#endif
+{
 public:
     AudioOutput();
     AudioOutput(int stream_index);
+#ifndef USING_OFX_SOUND_OBJECTS
     ~AudioOutput();
-    void configure(AudioThread* audioThread, std::shared_ptr<ofxHap::RingBuffer> buffer);
+#endif
+    void configure(std::shared_ptr<ofxHap::RingBuffer> buffer);
 
-    bool audioOut(ofSoundBuffer& buffer);
+#ifdef USING_OFX_SOUND_OBJECTS
+    virtual void audioOut(ofSoundBuffer &output) override;
+#else
+    void audioOut(ofSoundBuffer& buffer);
+#endif
     
     void start();
     void stop();
-    bool isPlaying() const;
-#ifdef USING_OFX_SOUND_OBJECTS
-    circularBufferWaveformDraw waveform;
-#endif
+    bool isPlaying() ;
+//#ifdef USING_OFX_SOUND_OBJECTS
+//    circularBufferWaveformDraw waveform;
+//#endif
 private:
-    AudioThread* _audioThread = nullptr;
     int stream_index;
+#ifndef USING_OFX_SOUND_OBJECTS
     std::atomic<bool>   playing;
+#endif
     std::shared_ptr<ofxHap::RingBuffer> _buffer;
 };
 

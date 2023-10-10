@@ -95,9 +95,11 @@ playing(false),
 #endif
     
 }
-AudioOutput::AudioOutput(int index):
-#ifndef USING_OFX_SOUND_OBJECTS
-playing(false),
+AudioOutput::AudioOutput(int index)
+#ifdef USING_OFX_SOUND_OBJECTS
+:ofxSoundObject(OFX_SOUND_OBJECT_PROCESSOR),
+#else
+:playing(false),
 #endif
  stream_index(index)
 {

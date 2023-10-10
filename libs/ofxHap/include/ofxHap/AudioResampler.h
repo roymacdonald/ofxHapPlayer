@@ -45,13 +45,16 @@ namespace ofxHap {
         void setRate(float r); // harmless to call repeatedly with same value
         // returns an AVERROR or 0 on success
         void setSampleRateOut(int sampleRateOut);
+        void setOutChannels(int outChannels);
         int resample(const AVFrame *src, int offset, int srcLength, float *dst, int dstLength, int& outSamplesWritten, int& outSamplesRead);
     private:
         float       _volume;
+        int         _outChannels = 0;
         float       _rate;
         SwrContext *_resampler;
         bool        _reconfigure;
         uint64_t    _layout;
+        uint64_t    _outLayout = 0;
         int         _sampleRateIn;
         int         _sampleRateOut;
         int         _format;

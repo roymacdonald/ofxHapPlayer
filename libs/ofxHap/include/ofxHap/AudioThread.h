@@ -58,9 +58,11 @@ namespace ofxHap {
         void        sync(const Clock& clock, bool soft);
         void        endOfStream();
         void        flush();
+#ifndef  USING_OFX_SOUND_OBJECTS
         void        setVolume(float v);
+#endif
         void setSampleRateOut(int sampleRate);
-        void setNumOutputChannels(size_t outChans);
+        
     private:
         class Action {
         public:
@@ -124,10 +126,12 @@ namespace ofxHap {
         bool                                _sync;
         bool                                _soft;
         Clock                               _clock;
+#ifndef  USING_OFX_SOUND_OBJECTS
         float                               _volume;
+#endif
         int                                 _sampleRateOut;
         int                                 _newSampleRateOut;
-        size_t _outNumChannels = 2;
+        
         void sampleRateOutCb(size_t & sr);
         bool bOutSampleRateChanged = false;
         ofEventListener sampleRateOutListener;

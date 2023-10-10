@@ -84,6 +84,7 @@ void ofxHap::AudioThread::threadMain(AudioParameters params, std::shared_ptr<ofx
     {
         
         sampleRateOutListener = ofxHap::GetSoundStream().outSampleRate.newListener(this, &ofxHap::AudioThread::sampleRateOutCb);
+        auto outChannels = ofxHap::GetSoundStream().streamSettings.numOutputChannels;
 #if OFX_HAP_HAS_CODECPAR
         int sampleRate = params.parameters->sample_rate;
 //        int channels = params.parameters->channels;
@@ -92,7 +93,7 @@ void ofxHap::AudioThread::threadMain(AudioParameters params, std::shared_ptr<ofx
 //        int channels = params.context->channels;
 #endif
         int channels = buffer->getNumChannels();
-        AudioResampler resampler(params, _sampleRateOut);
+        AudioResampler resampler(params, outChannels, _sampleRateOut);
         Fader fader(_sampleRateOut / 20);
         bool finish = false;
         std::queue<Action> queue;
@@ -376,9 +377,10 @@ void ofxHap::AudioThread::threadMain(AudioParameters params, std::shared_ptr<ofx
                     _soft = false;
                     _sync = false;
                 }
-
+#ifndef  USING_OFX_SOUND_OBJECTS
                 resampler.setVolume(_volume);
-                resampler.setOutChannels(_outNumChannels);
+#endif
+                
                 
                 if(bOutSampleRateChanged){
                     _sampleRateOut = _newSampleRateOut;
@@ -436,12 +438,15 @@ void ofxHap::AudioThread::endOfStream()
     _condition.notify_one();
 }
 
+#ifndef  USING_OFX_SOUND_OBJECTS
+
 void ofxHap::AudioThread::setVolume(float v)
 {
     std::lock_guard<std::mutex> guard(_lock);
     _volume = v;
     _condition.notify_one();
 }
+#endif
 
 void ofxHap::AudioThread::sampleRateOutCb(size_t & sr){
     setSampleRateOut(static_cast<int>(sr));
@@ -452,11 +457,6 @@ void ofxHap::AudioThread::setSampleRateOut(int sampleRate)
     _newSampleRateOut = sampleRate;
     
     bOutSampleRateChanged = true;
-    _condition.notify_one();
-}
-void ofxHap::AudioThread::setNumOutputChannels(size_t outChans){
-    std::lock_guard<std::mutex> guard(_lock);
-    _outNumChannels = outChans;
     _condition.notify_one();
 }
 

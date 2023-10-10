@@ -6,19 +6,21 @@
 //
 
 #include <ofxHap/AudioMixer.h>
+#ifndef USING_OFX_SOUND_OBJECTS
 #include <ofxHap/AudioOutput.h>
 #include "ofSoundBuffer.h"
-
+#endif
 
 namespace ofxHap{
+#ifndef USING_OFX_SOUND_OBJECTS
 //----------------------------------------------------
 AudioMixer::AudioMixer():
 counter(0)
 {    
-#ifdef USING_OFX_SOUND_OBJECTS
-    waveform.setNumBuffers(500);
-    waveform.setGridSpacingByNumSamples(256);
-#endif
+//#ifdef USING_OFX_SOUND_OBJECTS
+//    waveform.setNumBuffers(500);
+//    waveform.setGridSpacingByNumSamples(256);
+//#endif
     masterVolListener = masterVol.newListener(this, &AudioMixer::masterVolChanged);
 }
 //----------------------------------------------------
@@ -74,12 +76,13 @@ void AudioMixer::audioOut(ofSoundBuffer &output) {
         for(auto c: connections){
             if (c) {
 //                tempBuffer.set(0);
-                if(c->audioOut(tempBuffer)){
+//                if(
+                c->audioOut(tempBuffer);
                     for (int j = 0; j < tempBuffer.size(); j++) {
                         output.getBuffer()[j] += tempBuffer.getBuffer()[j];
                     }
                     bHasOutput = true;
-                }
+//                }
             }else{
                 bNeedsRemoval  = true;
             }
@@ -91,9 +94,9 @@ void AudioMixer::audioOut(ofSoundBuffer &output) {
         if(bNeedsRemoval){
             ofRemove(connections, [](AudioOutput* a){return !a;});
         }
-#ifdef USING_OFX_SOUND_OBJECTS
-    waveform.pushBuffer(output);
-#endif
+//#ifdef USING_OFX_SOUND_OBJECTS
+//    waveform.pushBuffer(output);
+//#endif
     
 //        if(bHasOutput && !ofIsFloatEqual(masterVolume, 1.0f)){
 //            output*=masterVolume;
@@ -107,6 +110,11 @@ AudioMixer* GetMixer(){
     static unique_ptr<AudioMixer> mxr = make_unique<AudioMixer>();
     return mxr.get();
 }
-
+#else
+ofxSoundMixer* GetMixer(){
+    static unique_ptr<ofxSoundMixer> mxr = make_unique<ofxSoundMixer>();
+    return mxr.get();
+}
+#endif
 
 }

@@ -5,18 +5,23 @@
 //
 
 #pragma once
+
+
+#ifdef USING_OFX_SOUND_OBJECTS
+//#include "waveformDraw.h"
+#include "ofxSoundMixer.h"
+#else
 #include "ofSoundBaseTypes.h"
 #include "ofParameter.h"
 
 #include <mutex>
 #include <atomic>
 
-
-#ifdef USING_OFX_SOUND_OBJECTS
-#include "waveformDraw.h"
 #endif
 
 namespace ofxHap {
+
+#ifndef USING_OFX_SOUND_OBJECTS
 class AudioOutput;
 class AudioMixer: public ofBaseSoundOutput {
 public:
@@ -44,9 +49,9 @@ public:
        // std::lock_guard<std::mutex> lck(connectionMutex);
         return connections.size();
     }
-#ifdef USING_OFX_SOUND_OBJECTS
-    circularBufferWaveformDraw waveform;
-#endif
+//#ifdef USING_OFX_SOUND_OBJECTS
+//    circularBufferWaveformDraw waveform;
+//#endif
     
 protected:
     ofEventListener masterVolListener;
@@ -60,7 +65,9 @@ protected:
     std::atomic<size_t> counter;
     
 };
-
     AudioMixer* GetMixer();
+#else
+    ofxSoundMixer* GetMixer();
+#endif
 
 }

@@ -37,18 +37,21 @@ typedef struct AVFrame AVFrame;
 namespace ofxHap {
     class AudioResampler {
     public:
-        AudioResampler(const AudioParameters& params, int outrate);
+        AudioResampler(const AudioParameters& params, int numOutchannels, int outrate);
         ~AudioResampler();
+#ifndef  USING_OFX_SOUND_OBJECTS
         float getVolume() const;
         void setVolume(float v); // harmless to call repeatedly with same value
+#endif
         float getRate() const;
         void setRate(float r); // harmless to call repeatedly with same value
         // returns an AVERROR or 0 on success
         void setSampleRateOut(int sampleRateOut);
-        void setOutChannels(int outChannels);
         int resample(const AVFrame *src, int offset, int srcLength, float *dst, int dstLength, int& outSamplesWritten, int& outSamplesRead);
     private:
+#ifndef  USING_OFX_SOUND_OBJECTS
         float       _volume;
+#endif
         int         _outChannels = 0;
         float       _rate;
         SwrContext *_resampler;

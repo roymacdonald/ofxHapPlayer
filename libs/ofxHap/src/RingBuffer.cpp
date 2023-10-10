@@ -27,14 +27,14 @@
 
 #include <ofxHap/RingBuffer.h>
 #include <algorithm>
-#include <iostream>
+//#include <iostream>
 
 ofxHap::RingBuffer::RingBuffer(int channels, int samplesPerChannel)
 :   _readStart(0), _writeStart(0),
     _buffer(channels * (samplesPerChannel + 1)), // maintain an empty slot to distinguish between empty and full state
     _channels(channels), _samples(samplesPerChannel)
 {
-    std::cout << "ofxHap::RingBuffer  channels:" << channels  << " samplesPerChannel: " << samplesPerChannel << "\n";
+//    std::cout << "ofxHap::RingBuffer  channels:" << channels  << " samplesPerChannel: " << samplesPerChannel << "\n";
 }
 
 void ofxHap::RingBuffer::setSamplesPerChannel(int samples){

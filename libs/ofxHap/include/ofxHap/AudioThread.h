@@ -60,6 +60,7 @@ namespace ofxHap {
         void        flush();
         void        setVolume(float v);
         void setSampleRateOut(int sampleRate);
+        void setNumOutputChannels(size_t outChans);
     private:
         class Action {
         public:
@@ -126,6 +127,7 @@ namespace ofxHap {
         float                               _volume;
         int                                 _sampleRateOut;
         int                                 _newSampleRateOut;
+        size_t _outNumChannels = 2;
         void sampleRateOutCb(size_t & sr);
         bool bOutSampleRateChanged = false;
         ofEventListener sampleRateOutListener;

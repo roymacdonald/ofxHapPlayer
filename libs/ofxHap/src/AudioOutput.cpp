@@ -119,12 +119,12 @@ AudioOutput::~AudioOutput()
 void AudioOutput::configure( std::shared_ptr<ofxHap::RingBuffer> buffer)
 {
     _buffer = buffer;
-    auto m = GetMixer();
 #ifndef USING_OFX_SOUND_OBJECTS
+    auto m = GetMixer();
     if(m) m->connect(this);
-#else
+//#else
     
-    if(m) this->connectTo(*m);
+//    if(m) this->connectTo(*m);
 #endif
 }
 
